@@ -1,25 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export default function App() {
+  // This state controls which page is visible. 'login' is the default.
+  const [page, setPage] = useState('login'); 
+
+  // A simple switch to render the correct page based on the state.
+  // In a larger app, you would use a library like React Router.
+  switch (page) {
+    case 'dashboard':
+      return <DashboardPage setPage={setPage} />;
+    case 'login':
+    default:
+      return <LoginPage setPage={setPage} />;
+  }
 }
-
-export default App;
