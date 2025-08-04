@@ -14,7 +14,7 @@ const LoginPage = ({ setPage }) => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
             <Icon path="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" className="w-12 h-12 text-indigo-600 mx-auto"/>
-            <h1 className="text-3xl font-bold text-gray-900 mt-4">Vibe Coder</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mt-4">Appscribe</h1>
             <p className="text-gray-600 mt-2">Log in to your developer dashboard.</p>
         </div>
         <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-200">
