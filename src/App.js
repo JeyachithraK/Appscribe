@@ -13,10 +13,6 @@ import LandingPage from './pages/LandingPage'; // <-- Your new import
 
 // The main <BrowserRouter> should wrap <App /> in your index.js file, not here.
 
-function App() {
-  // For now, we'll assume the user is not logged in.
-  // In a real app, you would have state here to check if the user is authenticated.
-  const isAuthenticated = false; // We will build this logic next
 
   return (
     <Routes>
