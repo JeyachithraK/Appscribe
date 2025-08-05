@@ -6,22 +6,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
+from bson import ObjectId # Import ObjectId to validate the ID format
 
 # --- 1. Application Setup & Configuration ---
 
-# Load environment variables from .env file
-# Make sure your .env file is in the same directory you run uvicorn from.
 load_dotenv()
-
-# Create the FastAPI app instance
 app = FastAPI()
 
 # --- 2. Security & Middleware ---
 
-# CORS Middleware to allow frontend communication
 origins = [
-    "http://localhost:3000", # For Create React App
-    "http://localhost:5173", # Default for Vite
+    "http://localhost:3000",
+    "http://localhost:5173",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -36,117 +32,117 @@ app.add_middleware(
 MONGO_CONNECTION_STRING = os.getenv("MONGO_CONNECTION_STRING")
 print(f"DEBUG: Connecting to MongoDB with URL: {MONGO_CONNECTION_STRING}")
 
-# Use certifi to provide SSL certificates
 ca = certifi.where()
 
 try:
-    # Connect to MongoDB Atlas
     client = AsyncIOMotorClient(MONGO_CONNECTION_STRING, tlsCAFile=ca, tlsAllowInvalidCertificates=True)
-    # Get a reference to the database
     db = client.get_database("ai_project_manager_db")
-    # Get a reference to the 'users' collection
     user_collection = db.get_collection("users")
+    project_collection = db.get_collection("projects")
     print("✅ Successfully connected to MongoDB Atlas.")
 except Exception as e:
     print(f"❌ Failed to connect to MongoDB: {e}")
     user_collection = None
+    project_collection = None
 
 # --- 4. Data Models (Pydantic) ---
 
-# Model for creating a new user
+# --- User Models ---
 class UserCreateModel(BaseModel):
     username: str = Field(..., example="john_doe")
     password: str = Field(..., example="a-very-strong-password")
 
-# Model for handling login requests
 class UserLoginModel(BaseModel):
     username: str
     password: str
 
-# Model for returning user details to the client (omitting the password)
 class UserOutModel(BaseModel):
     id: str = Field(alias="_id")
     username: str
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
-    model_config = ConfigDict(
-        populate_by_name=True,
-        from_attributes=True,
-    )
+# --- Project Models ---
+class ProjectCreateModel(BaseModel):
+    projectName: str = Field(..., example="New E-commerce Site")
+    clientName: str = Field(..., example="Global Retail Inc.")
+    owner_username: str = Field(..., example="testuser1")
+
+class ProjectOutModel(BaseModel):
+    id: str = Field(alias="_id")
+    projectName: str
+    clientName: str
+    owner_username: str
+    status: str
+    report: str
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+
 
 # --- 5. API Endpoints ---
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to the User Authentication API!"}
+    return {"message": "Welcome to the AI Project Manager API!"}
 
-@app.post(
-    "/api/users",
-    response_description="Create a new user",
-    response_model=UserOutModel,
-    status_code=status.HTTP_201_CREATED,
-)
+# --- User Endpoints ---
+@app.post("/api/users", response_model=UserOutModel, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreateModel = Body(...)):
-    """
-    Create a new user with a username and password.
-    The password will be stored as plain text.
-    """
-    if user_collection is None:
-        raise HTTPException(status_code=503, detail="Database service not available.")
-
-    # Check if user already exists
-    existing_user = await user_collection.find_one({"username": user.username})
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered",
-        )
-
-    # Create user document directly from the input model
-    user_document = user.model_dump()
-
-    # Insert the new user into the database
-    new_user = await user_collection.insert_one(user_document)
+    if user_collection is None: raise HTTPException(status_code=503, detail="Database service not available.")
+    if await user_collection.find_one({"username": user.username}): raise HTTPException(status_code=400, detail="Username already registered")
+    new_user = await user_collection.insert_one(user.model_dump())
     created_user = await user_collection.find_one({"_id": new_user.inserted_id})
-
-    if created_user:
-        created_user["_id"] = str(created_user["_id"])
-        return UserOutModel(**created_user)
-
-    raise HTTPException(status_code=500, detail="User could not be created.")
+    created_user["_id"] = str(created_user["_id"])
+    return UserOutModel(**created_user)
 
 @app.post("/api/login")
 async def login(user_credentials: UserLoginModel = Body(...)):
-    """
-    Authenticate a user and return a simple success message.
-    """
-    if user_collection is None:
-        raise HTTPException(status_code=503, detail="Database service not available.")
-
+    if user_collection is None: raise HTTPException(status_code=503, detail="Database service not available.")
     user = await user_collection.find_one({"username": user_credentials.username})
-    if not user or user["password"] != user_credentials.password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-        )
-    
-    return {"status": "success", "message": "Login successful"}
+    if not user or user["password"] != user_credentials.password: raise HTTPException(status_code=401, detail="Incorrect username or password")
+    return {"status": "success", "message": "Login successful", "username": user["username"]}
 
+# --- Project Endpoints ---
+@app.post("/api/projects", response_model=ProjectOutModel, status_code=status.HTTP_201_CREATED)
+async def create_project(project: ProjectCreateModel = Body(...)):
+    if project_collection is None: raise HTTPException(status_code=503, detail="Database service not available.")
+    project_document = project.model_dump()
+    project_document['status'] = 'Draft'
+    project_document['report'] = 'Client requirements report has not been generated yet.'
+    new_project = await project_collection.insert_one(project_document)
+    created_project = await project_collection.find_one({"_id": new_project.inserted_id})
+    created_project["_id"] = str(created_project["_id"])
+    return ProjectOutModel(**created_project)
 
-@app.get(
-    "/api/users/{username}",
-    response_description="Get a user by username",
-    response_model=UserOutModel,
-)
-async def get_user(username: str):
+@app.get("/api/projects/{username}", response_model=List[ProjectOutModel])
+async def get_projects_by_username(username: str):
+    if project_collection is None: raise HTTPException(status_code=503, detail="Database service not available.")
+    projects = []
+    async for project in project_collection.find({"owner_username": username}):
+        project["_id"] = str(project["_id"])
+        projects.append(ProjectOutModel(**project))
+    return projects
+
+# --- NEW ENDPOINT ---
+@app.get("/api/project/{project_id}", response_model=ProjectOutModel)
+async def get_project_by_id(project_id: str):
     """
-    Retrieve a user's details by their username.
+    Retrieve a single project by its unique ID.
     """
-    if user_collection is None:
+    if project_collection is None:
         raise HTTPException(status_code=503, detail="Database service not available.")
-        
-    user = await user_collection.find_one({"username": username})
-    if user:
-        user["_id"] = str(user["_id"])
-        return UserOutModel(**user)
     
-    raise HTTPException(status_code=404, detail=f"User '{username}' not found")
+    # --- DEBUGGING LINE ---
+    print(f"--- Attempting to find project with ID: {project_id} ---")
+    
+    try:
+        # Convert the string ID from the URL to a MongoDB ObjectId
+        obj_id = ObjectId(project_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid project ID format.")
+
+    project = await project_collection.find_one({"_id": obj_id})
+    
+    if project:
+        project["_id"] = str(project["_id"])
+        return ProjectOutModel(**project)
+    
+    raise HTTPException(status_code=404, detail=f"Project with ID '{project_id}' not found")
