@@ -87,7 +87,7 @@ const App = () => {
                 className="font-bold px-8 py-4 rounded-md transition-all duration-300 flex items-center justify-center gap-2"
                 style={{ backgroundColor: theme.colors.primary, color: theme.colors.background }}
               >
-                Get Started for Free <ArrowRight size={20} />
+                Get Started <ArrowRight size={20} />
               </button>
               <button 
                 className="font-bold px-8 py-4 rounded-md transition-all duration-300 border"
