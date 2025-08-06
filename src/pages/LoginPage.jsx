@@ -1,15 +1,23 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import Icon from '../components/Icon'; // Assuming you have this component
+import { Bot, LogIn, Github, Mail, Chrome } from 'lucide-react';
 
-// The component now accepts an `onLoginSuccess` prop instead of `setPage`
-const LoginPage = ({ onLoginSuccess }) => {
+const LoginPage = ({ onLoginSuccess, onNavigateBack }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+
+  // Define the same theme colors from your LandingPage
+  const theme = {
+    colors: {
+      background: '#0a192f',
+      primary: '#00c6ff',
+      text: '#ccd6f6',
+      textLight: '#8892b0',
+      card: '#112240',
+      border: '#1e2d50',
+    },
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,62 +25,103 @@ const LoginPage = ({ onLoginSuccess }) => {
     setError('');
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/login', {
-        username: username,
-        password: password,
-      });
+      // Simulate an API call with a 1.5-second delay
+      await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-      // On success, call the function passed from App.jsx
-      if (response.data.status === 'success') {
-        onLoginSuccess(response.data.username); // Pass the username up to the App component
-        navigate('/dashboard'); // Then navigate to the dashboard
+      // Mock login logic with hardcoded credentials for demonstration
+      if (username === 'testuser' && password === 'password') {
+        onLoginSuccess(username);
+      } else {
+        throw new Error('Invalid username or password.');
       }
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.detail) {
-        setError(err.response.data.detail);
-      } else {
-        setError('An unexpected error occurred. Please try again.');
-      }
+      setError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Helper component for social login buttons
+  const SocialAuthButton = ({ icon, label, onClick }) => (
+    <button 
+      type="button" 
+      onClick={onClick} 
+      className="flex items-center justify-center w-full px-4 py-3 rounded-lg border transition-colors duration-200 hover:bg-opacity-80"
+      style={{
+        backgroundColor: theme.colors.background,
+        borderColor: theme.colors.border,
+        color: theme.colors.text,
+      }}
+    >
+      {icon}
+      <span className="ml-3 font-semibold text-sm">{label}</span>
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Icon path="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" className="w-12 h-12 text-indigo-600 mx-auto"/>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">AppScribe</h1>
-          <p className="text-gray-600 mt-2">Log in to your developer dashboard.</p>
+    <div 
+      style={{ backgroundColor: theme.colors.background, color: theme.colors.text }} 
+      className="min-h-screen font-sans antialiased flex flex-col justify-center items-center p-4 sm:p-8"
+    >
+      <div className="w-full max-w-md animate-fade-in-up">
+        {/* Header with App Logo and Title */}
+        <div className="text-center mb-10">
+          <Bot size={50} style={{ color: theme.colors.primary }} className="mx-auto" />
+          <h1 className="text-4xl font-extrabold mt-4 tracking-tight">AppScribe</h1>
+          <p className="mt-2 text-base" style={{ color: theme.colors.textLight }}>Log in to continue your work.</p>
         </div>
-        <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-200">
-          <form onSubmit={handleLogin}>
+
+        {/* Login Form Container */}
+        <div 
+          className="p-8 sm:p-10 rounded-2xl shadow-2xl transition-all duration-300"
+          style={{ backgroundColor: theme.colors.card, border: `1px solid ${theme.colors.border}` }}
+        >
+          <form onSubmit={handleLogin} className="space-y-6">
+            {/* Error Message */}
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+              <div 
+                className="bg-red-900 bg-opacity-30 border border-red-900 text-red-300 px-4 py-3 rounded-lg relative" 
+                role="alert"
+              >
                 <span className="block sm:inline">{error}</span>
               </div>
             )}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="username">
+
+            {/* Username Field */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: theme.colors.textLight }} htmlFor="username">
                 Username
               </label>
               <input 
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-opacity-50 text-white" 
+                style={{
+                  backgroundColor: theme.colors.background,
+                  border: `1px solid ${theme.colors.border}`,
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                }}
                 type="text" 
                 id="username" 
-                placeholder="e.g., testuser1"
+                placeholder="e.g., testuser"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
+            
+            {/* Password Field */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: theme.colors.textLight }} htmlFor="password">
                 Password
               </label>
               <input 
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                className="w-full px-4 py-3 rounded-lg focus:ring-2 focus:ring-opacity-50 text-white" 
+                style={{
+                  backgroundColor: theme.colors.background,
+                  border: `1px solid ${theme.colors.border}`,
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                }}
                 type="password" 
                 id="password" 
                 placeholder="••••••••"
@@ -81,14 +130,54 @@ const LoginPage = ({ onLoginSuccess }) => {
                 required
               />
             </div>
+
+            {/* Login Button */}
             <button 
               type="submit"
-              className="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm hover:bg-indigo-700 transition-all duration-200 flex items-center justify-center disabled:opacity-50"
+              className="w-full font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: theme.colors.primary,
+                color: theme.colors.background,
+                textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                transform: isLoading ? 'scale(0.98)' : 'scale(1)',
+              }}
               disabled={isLoading}
             >
-              {isLoading ? 'Logging in...' : 'Log In'}
+              {isLoading ? 'Logging In...' : (
+                <>
+                  <LogIn size={20} className="mr-2" /> Log In
+                </>
+              )}
             </button>
           </form>
+
+          {/* Social Login Divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-grow h-px" style={{ backgroundColor: theme.colors.border }}></div>
+            <span className="px-4 text-sm" style={{ color: theme.colors.textLight }}>or</span>
+            <div className="flex-grow h-px" style={{ backgroundColor: theme.colors.border }}></div>
+          </div>
+
+          {/* Social Login Buttons */}
+          <div className="space-y-3">
+            <SocialAuthButton icon={<Chrome size={20} />} label="Login with Google" onClick={() => alert('Google login clicked!')}/>
+            <SocialAuthButton icon={<Github size={20} />} label="Login with GitHub" onClick={() => alert('GitHub login clicked!')}/>
+            <SocialAuthButton icon={<Mail size={20} />} label="Login with Microsoft" onClick={() => alert('Microsoft login clicked!')}/>
+          </div>
+        </div>
+
+        {/* Sign Up / Back to Home Link */}
+        <div className="mt-8 text-center">
+          <p className="text-sm" style={{ color: theme.colors.textLight }}>
+            Don't have an account? 
+            <button 
+              onClick={onNavigateBack} 
+              className="text-sm font-semibold ml-2 transition-colors duration-200 hover:text-white"
+              style={{ color: theme.colors.primary }}
+            >
+              Sign up for free
+            </button>
+          </p>
         </div>
       </div>
     </div>

@@ -1,21 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // <-- Import useNavigate
 import { BrainCircuit, ListChecks, ArrowRight, Code, GitCommit, Bot, ChevronRight, Menu, X, ClipboardCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 // Main App Component
-const LandingPage = () => {
+const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate(); // <-- Initialize the navigate function
+  const [isButtonActive, setIsButtonActive] = useState(false);
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
-  const theme = {
-    colors: {
-      background: '#0a192f', // Navy Blue
-      primary: '#00c6ff',     // Bright Cyan/Blue
-      text: '#ccd6f6',
-      textLight: '#8892b0',
-      card: '#112240',
-      border: '#1e2d50',
-    },
+  // Define the words you want to rotate
+  const rotatingWords = ['Actionable Plan', 'Insights', 'Action', 'Impact', 'Success'];
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [wordOpacity, setWordOpacity] = useState(1);
+
+  // Use a useEffect to handle the word rotation
+  useEffect(() => {
+    const totalIntervalTime = 3000; // 3 seconds for the full cycle
+    const fadeOutTime = 700; // Match this with the CSS transition duration
+    
+    const interval = setInterval(() => {
+      // Step 1: Start fading out
+      setWordOpacity(0);
+
+      // Step 2: After the fade-out transition, change the word and fade it back in
+      const changeWordTimeout = setTimeout(() => {
+        setCurrentWordIndex(prevIndex => (prevIndex + 1) % rotatingWords.length);
+        setWordOpacity(1);
+      }, fadeOutTime); 
+
+      // Cleanup function for the timeout
+      return () => clearTimeout(changeWordTimeout);
+
+    }, totalIntervalTime);
+
+    // Cleanup function for the interval
+    return () => clearInterval(interval);
+  }, [rotatingWords.length]);
+
+  // Handle button click for cursor and animation
+  const handleButtonClick = () => {
+    setIsButtonActive(true);
+    // Simulate a short loading process
+    setTimeout(() => {
+      setIsButtonActive(false);
+      // Navigate to login page after simulation
+      navigate('/login'); 
+      console.log('Navigating to login page...');
+    }, 1500); 
   };
 
   const navLinks = [
@@ -24,8 +55,20 @@ const LandingPage = () => {
     { name: 'About', href: '#about' },
   ];
 
+  const theme = {
+    colors: {
+      background: '#0a192f', // Navy Blue
+      primary: '#00c6ff',     // Bright Cyan/Blue
+      text: '#ccd6f6',
+      textLight: '#8892b0',
+      card: '#112240',
+      border: '#1e2d50',
+    },
+  };
+
   return (
-    <div style={{ backgroundColor: theme.colors.background, color: theme.colors.text }} className="min-h-screen font-sans antialiased">
+    <div style={{ backgroundColor: theme.colors.background, color: theme.colors.text }} 
+         className={`min-h-screen font-sans antialiased ${isButtonActive ? 'cursor-wait' : 'cursor-default'}`}>
       {/* Navbar */}
       <nav style={{ backgroundColor: theme.colors.card, borderBottom: `1px solid ${theme.colors.border}` }} className="sticky top-0 z-50 px-4 sm:px-8 py-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
@@ -39,10 +82,12 @@ const LandingPage = () => {
             ))}
           </div>
           <div className="hidden md:flex items-center space-x-4">
-            <button onClick={() => navigate('/login')} className="text-sm font-medium" style={{color: theme.colors.textLight}}>Log In</button>
+            <button onClick={() => navigate('/login')} className="text-sm font-medium hover:text-white transition-colors duration-300 cursor-pointer" style={{color: theme.colors.textLight}}>
+              Log In
+            </button>
             <button 
-              onClick={() => navigate('/login')} // <-- Changed to navigate
-              className="text-sm font-medium px-4 py-2 rounded-md transition-all duration-300"
+              onClick={handleButtonClick}
+              className="text-sm font-medium px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 cursor-pointer"
               style={{ backgroundColor: theme.colors.primary, color: '#0a192f' }}
             >
               Sign Up Free
@@ -61,10 +106,12 @@ const LandingPage = () => {
               {navLinks.map(link => (
                 <a key={link.name} href={link.href} className="hover:text-white transition-colors duration-300" style={{color: theme.colors.textLight}} onClick={() => setIsMenuOpen(false)}>{link.name}</a>
               ))}
-              <button onClick={() => { navigate('/login'); setIsMenuOpen(false); }} className="text-sm font-medium" style={{color: theme.colors.textLight}}>Log In</button>
+              <button onClick={() => { navigate('/login'); setIsMenuOpen(false); }} className="text-sm font-medium hover:text-white transition-colors duration-300 cursor-pointer" style={{color: theme.colors.textLight}}>
+                Log In
+              </button>
               <button 
-                onClick={() => { navigate('/login'); setIsMenuOpen(false); }} // <-- Changed to navigate
-                className="w-full text-sm font-medium px-4 py-2 rounded-md transition-all duration-300"
+                onClick={() => { handleButtonClick(); setIsMenuOpen(false); }}
+                className="w-full text-sm font-medium px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105 cursor-pointer"
                 style={{ backgroundColor: theme.colors.primary, color: '#0a192f' }}
               >
                 Sign Up Free
@@ -79,21 +126,30 @@ const LandingPage = () => {
         <section className="container mx-auto px-4 sm:px-8 py-20 sm:py-32 flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 text-center md:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-              From Client Survey to <span style={{ color: theme.colors.primary }}>Actionable Plan</span>.
+              From Client Survey to <span key={rotatingWords[currentWordIndex]} className="inline-block transition-opacity duration-700 ease-in-out" style={{ color: theme.colors.primary, opacity: wordOpacity }}>{rotatingWords[currentWordIndex]}</span>
             </h1>
             <p className="mt-6 text-lg sm:text-xl max-w-xl mx-auto md:mx-0" style={{ color: theme.colors.textLight }}>
               AppScribe AI generates intelligent surveys to perfectly capture client needs, then automatically builds your entire project backlog. Stop guessing, start building.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+              {/* Button with animated arrow on hover and new click animation */}
               <button 
-                onClick={() => navigate('/login')} // <-- Changed to navigate
-                className="font-bold px-8 py-4 rounded-md transition-all duration-300 flex items-center justify-center gap-2"
-                style={{ backgroundColor: theme.colors.primary, color: theme.colors.background }}
+                onClick={handleButtonClick}
+                className="font-bold px-8 py-4 rounded-md flex items-center justify-center gap-2 group transform hover:scale-105 cursor-pointer"
+                style={{
+                  color: isButtonActive ? theme.colors.text : theme.colors.background,
+                  background: `linear-gradient(to right, ${theme.colors.card}, ${theme.colors.primary} 50%, ${theme.colors.primary} 50%)`,
+                  backgroundSize: '200% 100%',
+                  backgroundPosition: isButtonActive ? 'left' : 'right',
+                  transition: 'background-position 0.5s, color 0.5s',
+                }}
               >
-                Get Started for Free <ArrowRight size={20} />
+                Get Started for Free 
+                <ArrowRight size={20} className="transition-transform duration-300 group-hover:translate-x-1" />
               </button>
+              {/* Button with new hover style */}
               <button 
-                className="font-bold px-8 py-4 rounded-md transition-all duration-300 border"
+                className="font-bold px-8 py-4 rounded-md transition-all duration-300 border hover:bg-white hover:bg-opacity-10 cursor-pointer"
                 style={{ borderColor: theme.colors.border, color: theme.colors.text }}
               >
                 Request a Demo
@@ -177,7 +233,7 @@ const LandingPage = () => {
         <section id="about" className="py-20 sm:py-24" style={{ backgroundColor: theme.colors.card }}>
             <div className="container mx-auto px-4 sm:px-8 flex flex-col md:flex-row items-center gap-12">
                 <div className="md:w-1/2">
-                    <div className="p-8 rounded-lg" style={{backgroundColor: theme.colors.background}}>
+                    <div className="p-8 rounded-lg transition-transform transform hover:-translate-y-2" style={{backgroundColor: theme.colors.background}}>
                         <Code size={40} className="mb-4" style={{color: theme.colors.primary}}/>
                         <h3 className="text-2xl font-bold">Built for Developers, by Developers</h3>
                         <p className="mt-4" style={{color: theme.colors.textLight}}>
@@ -227,45 +283,42 @@ const FeatureCard = ({ icon, title, description, theme }) => (
 
 const WorkflowStep = ({ icon, step, title, description, theme }) => (
     <div className="flex flex-col items-center text-center p-6 z-10 w-full sm:w-auto" style={{backgroundColor: theme.colors.background}}>
-        <div className="flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{backgroundColor: theme.colors.card, color: theme.colors.primary, border: `2px solid ${theme.colors.primary}`}}>
-            {icon}
-        </div>
-        <span className="text-sm font-bold mb-2" style={{color: theme.colors.primary}}>STEP {step}</span>
-        <h3 className="text-xl font-bold mb-2">{title}</h3>
-        <p className="text-sm" style={{color: theme.colors.textLight}}>{description}</p>
+      <div className="flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{backgroundColor: theme.colors.card, color: theme.colors.primary, border: `2px solid ${theme.colors.primary}`}}>
+        {icon}
+      </div>
+      <span className="text-sm font-bold mb-2" style={{color: theme.colors.primary}}>STEP {step}</span>
+      <h3 className="text-xl font-bold mb-2">{title}</h3>
+      <p className="text-sm" style={{color: theme.colors.textLight}}>{description}</p>
     </div>
 );
 
 
 const HeroAnimation = ({ theme }) => {
-  const [tasks, setTasks] = useState([
-    { id: 1, text: 'Create API endpoint for users', done: false },
-    { id: 2, text: 'Build hero section component', done: false },
-    { id: 3, text: 'Design database schema', done: false },
-    { id: 4, text: 'Implement user authentication', done: false },
-  ]);
-  const [progress, setProgress] = useState(0);
+  const initialTasks = [
+    { id: 1, text: 'Create API endpoint for users' },
+    { id: 2, text: 'Build hero section component' },
+    { id: 3, text: 'Design database schema' },
+    { id: 4, text: 'Implement user authentication' },
+  ];
+  const [completedIndex, setCompletedIndex] = useState(-1);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTasks(prevTasks => {
-        const notDoneIndex = prevTasks.findIndex(t => !t.done);
-        if (notDoneIndex > -1) {
-          const newTasks = [...prevTasks];
-          newTasks[notDoneIndex].done = true;
-          return newTasks;
+      setCompletedIndex(prevIndex => {
+        // If we've completed all tasks, reset
+        if (prevIndex === initialTasks.length - 1) {
+          return -1;
         }
-        // Reset
-        return prevTasks.map(t => ({ ...t, done: false }));
+        // Otherwise, move to the next task
+        return prevIndex + 1;
       });
-    }, 1500);
-    return () => clearInterval(interval);
-  }, []);
+    }, 2000);
 
-  useEffect(() => {
-    const doneCount = tasks.filter(t => t.done).length;
-    setProgress((doneCount / tasks.length) * 100);
-  }, [tasks]);
+    // Cleanup function to clear the interval
+    return () => clearInterval(interval);
+  }, []); // Empty dependency array ensures this runs only once
+
+  const progress = ((completedIndex + 1) / initialTasks.length) * 100;
 
   return (
     <div className="w-full max-w-md p-6 rounded-xl shadow-2xl" style={{ backgroundColor: theme.colors.card, border: `1px solid ${theme.colors.border}` }}>
@@ -275,17 +328,17 @@ const HeroAnimation = ({ theme }) => {
       </div>
       <div className="w-full h-px mb-4" style={{ backgroundColor: theme.colors.border }}></div>
       <div className="space-y-3">
-        {tasks.map(task => (
+        {initialTasks.map((task, index) => (
           <div
             key={task.id}
-            className={`flex items-center p-3 rounded-md transition-all duration-500 ${task.done ? 'opacity-50' : 'opacity-100'}`}
+            className={`flex items-center p-3 rounded-md transition-all duration-500 ${index <= completedIndex ? 'opacity-50' : 'opacity-100'}`}
             style={{ backgroundColor: theme.colors.background }}
           >
             <div
-              className={`w-5 h-5 rounded-full mr-3 flex-shrink-0 border-2 transition-all duration-500 ${task.done ? 'bg-green-400 border-green-400' : ''}`}
+              className={`w-5 h-5 rounded-full mr-3 flex-shrink-0 border-2 transition-all duration-500 ${index <= completedIndex ? 'bg-green-400 border-green-400' : ''}`}
               style={{ borderColor: theme.colors.primary }}
             ></div>
-            <p className={`text-sm transition-all duration-500 ${task.done ? 'line-through' : ''}`} style={{ color: theme.colors.text }}>
+            <p className={`text-sm transition-all duration-500 ${index <= completedIndex ? 'line-through' : ''}`} style={{ color: theme.colors.text }}>
               {task.text}
             </p>
           </div>
@@ -304,4 +357,4 @@ const HeroAnimation = ({ theme }) => {
   );
 };
 
-export default LandingPage;
+export default App;
