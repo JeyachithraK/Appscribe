@@ -8,12 +8,7 @@ const NewProjectModal = ({ isOpen, onClose, onAddProject }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (projectName && clientName) {
-      onAddProject({ projectName, clientName });
-      setProjectName('');
-      setClientName('');
-      onClose();
-    }
+    onAddProject({ projectName, clientName });
   };
 
   return (
@@ -28,7 +23,7 @@ const NewProjectModal = ({ isOpen, onClose, onAddProject }) => {
               id="projectName"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               placeholder="e.g., Zenith Yoga Website"
               required
             />
@@ -40,7 +35,7 @@ const NewProjectModal = ({ isOpen, onClose, onAddProject }) => {
               id="clientName"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               placeholder="e.g., Jane Doe"
               required
             />

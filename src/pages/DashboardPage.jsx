@@ -1,44 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import ProjectCard from '../components/ProjectCard';
-import NewProjectModal from '../components/NewProjectModal';
-import Icon from '../components/Icon';
+import axios from 'axios';
+import NewProjectModal from '../components/NewProjectModal'; // We will create this
+import ProjectCard from '../components/ProjectCard';       // We will create this
+import Icon from '../components/Icon';                     // Assuming you have this
 
-const DashboardPage = ({ setPage }) => {
+const DashboardPage = ({ username }) => {
   const [projects, setProjects] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // In a real app, this would fetch data from your FastAPI backend
-  useEffect(() => {
-    // Placeholder data for MVP
-    const initialProjects = [
-      { id: 'a1b2c3d4', projectName: 'E-commerce Platform', clientName: 'Global Retail Inc.', status: 'Report Ready' },
-      { id: 'e5f6g7h8', projectName: 'Corporate Landing Page', clientName: 'Innovate Solutions', status: 'Survey Sent' },
-    ];
-    setProjects(initialProjects);
-  }, []);
+  // Function to fetch projects for the logged-in user
+  const fetchProjects = async () => {
+    if (!username) return;
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/api/projects/${username}`);
+      setProjects(response.data);
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const addProject = ({ projectName, clientName }) => {
-    const newProject = {
-      id: crypto.randomUUID(), // Generate a unique ID
-      projectName,
-      clientName,
-      status: 'Draft',
-    };
-    // In a real app, you would POST this to your backend
-    setProjects(prevProjects => [newProject, ...prevProjects]);
+  useEffect(() => {
+    fetchProjects();
+  }, [username]);
+
+  // Function to handle creating a new project
+  const handleAddProject = async ({ projectName, clientName }) => {
+    if (!projectName || !clientName || !username) {
+      alert("Project name and client name are required.");
+      return;
+    }
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/projects', {
+        projectName,
+        clientName,
+        owner_username: username,
+      });
+      // Add the new project to the start of the list and close the modal
+      setProjects(prevProjects => [response.data, ...prevProjects]);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      alert("Could not create project. Please try again.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Icon path="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" className="w-8 h-8 text-indigo-600"/>
-            <h1 className="text-2xl font-bold text-gray-900">Vibe Coder Projects</h1>
-          </div>
-          <button onClick={() => setPage('login')} className="text-sm font-semibold text-gray-600 hover:text-indigo-600">
-            Logout
-          </button>
+          <h1 className="text-2xl font-bold text-gray-900">AppScribe Projects</h1>
+          <span className="text-sm text-gray-600">Logged in as: <strong>{username}</strong></span>
         </div>
       </header>
       
@@ -47,17 +62,19 @@ const DashboardPage = ({ setPage }) => {
           <h2 className="text-3xl font-bold text-gray-800">Your Client Dashboard</h2>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg shadow-sm hover:bg-indigo-700 transition-all"
+            className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg shadow-sm hover:bg-indigo-700"
           >
             <Icon path="M12 4.5v15m7.5-7.5h-15" className="w-5 h-5"/>
             Create New Project
           </button>
         </div>
         
-        {projects.length > 0 ? (
+        {isLoading ? (
+          <p>Loading projects...</p>
+        ) : projects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map(project => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project._id} project={project} />
             ))}
           </div>
         ) : (
@@ -69,7 +86,11 @@ const DashboardPage = ({ setPage }) => {
         )}
       </main>
       
-      <NewProjectModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddProject={addProject} />
+      <NewProjectModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAddProject={handleAddProject} 
+      />
     </div>
   );
 };
