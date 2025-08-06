@@ -3,7 +3,7 @@ import { BrainCircuit, ListChecks, ArrowRight, Code, GitCommit, Bot, ChevronRigh
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 // Main App Component
-const App = () => {
+const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isButtonActive, setIsButtonActive] = useState(false);
   const navigate = useNavigate(); // Initialize useNavigate hook
@@ -357,4 +357,4 @@ const HeroAnimation = ({ theme }) => {
   );
 };
 
-export default App;
+export default LandingPage;
